@@ -1,0 +1,12 @@
+---
+- include: debian.yml
+  when: ansible_os_family == 'Debian'
+
+- include: redhat.yml
+  when: ansible_os_family == 'RedHat'
+
+- include: generic.yml
+  when: ansible_os_family == 'Darwin'
+
+- include: default.yml
+  when: loaded_os_family|default(False) == False

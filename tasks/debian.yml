@@ -1,0 +1,11 @@
+---
+- name: Debian | Set loaded_os_family
+  set_fact:
+    loaded_os_family: "{{ ansible_os_family }}"
+
+- name: Debian | Install sshpass
+  apt:
+    pkg: sshpass
+    update_cache: yes
+    cache_valid_time: 86400
+    state: latest

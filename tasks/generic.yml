@@ -1,0 +1,31 @@
+---
+- name: Generic | Set loaded_os_family
+  set_fact:
+    loaded_os_family: "{{ ansible_os_family }}"
+
+- name: Generic | Fetch sshpass
+  get_url:
+    url: http://sourceforge.net/projects/sshpass/files/latest/download
+    dest: /tmp/sshpass.tar.gz
+  register: get_url
+
+- name: Generic | Make sure sshpass tmp directory exists
+  file:
+    path: /tmp/sshpass
+    state: directory
+
+- name: Generic | Unarchive sshpass
+  shell: tar xzf /tmp/sshpass.tar.gz -C /tmp/sshpass --strip-components 1
+  when: get_url|changed
+
+- name: Generic | Configure sshpass
+  command: ./configure chdir=/tmp/sshpass/
+  when: get_url|changed
+
+- name: Generic | Build sshpass
+  command: make chdir=/tmp/sshpass/
+  when: get_url|changed
+
+- name: Generic | Install sshpass
+  command: make install chdir=/tmp/sshpass/
+  when: get_url|changed
