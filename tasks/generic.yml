@@ -3,29 +3,69 @@
   set_fact:
     sshpass_loaded_os_family: "{{ ansible_os_family }}"
 
+- name: Generic | Determine current version
+  local_action:
+    module: uri
+    url: http://sourceforge.net/projects/sshpass/files/latest/download
+    follow_redirects: yes
+    method: HEAD
+  register: sshpass_uri
+
+- name: Generic | Set current version
+  set_fact:
+    sshpass_version: "{{ sshpass_uri.content_location|dirname|basename }}"
+
+- name: Generic | Check for sshpass
+  stat:
+    path: /usr/local/bin/sshpass
+  register: sshpass_stat
+
+- name: Generic | Check sshpass version
+  command: /usr/local/bin/sshpass -V
+  register: sshpass_version_output
+  changed_when: False
+  failed_when: sshpass_version_output.rc|int != 0
+  when: sshpass_stat.stat.exists
+
+- name: Generic | Determine if sshpass needs installed/updated
+  set_fact:
+    sshpass_continue: "{{ not sshpass_version_output.stdout|default('')|match('sshpass ' + sshpass_version|string)|bool }}"
+
 - name: Generic | Fetch sshpass
   get_url:
     url: http://sourceforge.net/projects/sshpass/files/latest/download
     dest: /tmp/sshpass.tar.gz
-  register: get_url
+  register: sshpass_get_url
+  when: sshpass_continue|bool
 
 - name: Generic | Make sure sshpass tmp directory exists
   file:
     path: /tmp/sshpass
     state: directory
+  when: sshpass_continue|bool
 
 - name: Generic | Unarchive sshpass
-  shell: tar xzf /tmp/sshpass.tar.gz -C /tmp/sshpass --strip-components 1
-  when: get_url|changed
+  command: tar xzf /tmp/sshpass.tar.gz -C /tmp/sshpass --strip-components 1
+  when: sshpass_continue|bool
 
 - name: Generic | Configure sshpass
   command: ./configure chdir=/tmp/sshpass/
-  when: get_url|changed
+  when: sshpass_continue|bool
 
 - name: Generic | Build sshpass
   command: make chdir=/tmp/sshpass/
-  when: get_url|changed
+  when: sshpass_continue|bool
 
 - name: Generic | Install sshpass
   command: make install chdir=/tmp/sshpass/
-  when: get_url|changed
+  when: sshpass_continue|bool
+
+- name: Generic | Clean up
+  file:
+    path: "{{ item }}"
+    recurse: yes
+    force: yes
+    state: absent
+  with_items:
+    - /tmp/sshpass
+    - /tmp/sshpass.tar.gz
