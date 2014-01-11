@@ -9,4 +9,4 @@
   when: ansible_os_family == 'Darwin'
 
 - include: default.yml
-  when: loaded_os_family|default(False) == False
+  when: sshpass_loaded_os_family|default(False) == False

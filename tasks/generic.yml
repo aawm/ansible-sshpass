@@ -1,7 +1,7 @@
 ---
-- name: Generic | Set loaded_os_family
+- name: Generic | Set sshpass_loaded_os_family
   set_fact:
-    loaded_os_family: "{{ ansible_os_family }}"
+    sshpass_loaded_os_family: "{{ ansible_os_family }}"
 
 - name: Generic | Fetch sshpass
   get_url:
